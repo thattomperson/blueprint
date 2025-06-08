@@ -190,7 +190,10 @@ let
       perSystemModule =
         { config, lib, ... }:
         {
-          imports = [ (perSystemArgsModule config.nixpkgs.hostPlatform.system) ];
+          imports = [
+            (perSystemArgsModule config.nixpkgs.hostPlatform.system)
+            { nixpkgs.config = nixpkgs.config or {}; }
+          ];
         };
 
       perSystemHMModule =
