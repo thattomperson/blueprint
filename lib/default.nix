@@ -312,8 +312,55 @@ in rec {
         in
         importDir (src + "/hosts") mkHosts;
 
-      # Attrset of ${system}.homeConfigurations."${username}@${hostname}"
       standaloneHomeConfigurations =
+      let
+          mkHomeConfiguration =
+            {
+              username,
+              modulePath,
+              pkgs,
+              system,
+            }:
+            home-manager.lib.homeManagerConfiguration {
+              inherit pkgs;
+              extraSpecialArgs = specialArgs;
+              modules = [
+                (perSystemArgsModule system)
+                modulePath
+                (
+                  { config, ... }:
+                  {
+                    home.username = lib.mkDefault username;
+                    # Home Manager would use builtins.getEnv prior to 20.09, but
+                    # this feature was removed to make it pure. However, since
+                    # we know the operating system and username ahead of time,
+                    # it's safe enough to automatically set a default for the home
+                    # directory and let users customize it if they want. This is
+                    # done automatically in the NixOS or nix-darwin modules too.
+                    home.homeDirectory =
+                      let
+                        username = config.home.username;
+                        homeDir = if pkgs.stdenv.isDarwin then "/Users/${username}" else "/home/${username}";
+                      in
+                      lib.mkDefault homeDir;
+                  }
+                )
+              ];
+            };
+
+          homesFlat = lib.concatMapAttrs (
+            hostname: hostUserModules:
+            lib.mapAttrs' (username: modulePath: {
+              name = "${username}@${hostname}";
+              value = {
+                inherit hostname username modulePath;
+              };
+            }) hostUserModules
+          ) homesNested;
+        in homesFlat;
+
+      # Attrset of ${system}.homeConfigurations."${username}@${hostname}"
+      standaloneHomeConfigurationsPacakges =
         let
           mkHomeConfiguration =
             {
@@ -693,7 +740,7 @@ in rec {
       # nix3 CLI output (`packages` output expects flat attrset)
       # FIXME: Find another way to make this work without introducing legacyPackages.
       #        May involve changing upstream home-manager.
-      legacyPackages = lib.optionalAttrs (homesNested != { }) standaloneHomeConfigurations;
+      legacyPackages = lib.optionalAttrs (homesNested != { }) standaloneHomeConfigurationsPacakges;
       homeConfigurations = lib.optionalAttrs (homesNested != { }) standaloneHomeConfigurations;
 
       darwinConfigurations = lib.mapAttrs (_: x: x.value) (hostsByCategory.darwinConfigurations or { });
