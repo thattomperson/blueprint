@@ -694,6 +694,7 @@ in rec {
       # FIXME: Find another way to make this work without introducing legacyPackages.
       #        May involve changing upstream home-manager.
       legacyPackages = lib.optionalAttrs (homesNested != { }) standaloneHomeConfigurations;
+      homeConfigurations = lib.optionalAttrs (homesNested != { }) standaloneHomeConfigurations;
 
       darwinConfigurations = lib.mapAttrs (_: x: x.value) (hostsByCategory.darwinConfigurations or { });
       nixosConfigurations = lib.mapAttrs (_: x: x.value) (hostsByCategory.nixosConfigurations or { });
