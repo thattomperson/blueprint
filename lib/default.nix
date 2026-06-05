@@ -325,7 +325,6 @@ in rec {
               inherit pkgs;
               extraSpecialArgs = specialArgs;
               modules = [
-                (perSystemArgsModule system)
                 modulePath
                 (
                   { config, ... }:
@@ -352,7 +351,7 @@ in rec {
             hostname: hostUserModules:
             lib.mapAttrs' (username: modulePath: {
               name = "${username}@${hostname}";
-              value = {
+              value = mkHomeConfiguration {
                 inherit hostname username modulePath;
               };
             }) hostUserModules
