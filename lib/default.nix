@@ -319,7 +319,6 @@ in rec {
               username,
               modulePath,
               pkgs,
-              system,
             }:
             home-manager.lib.homeManagerConfiguration {
               inherit pkgs;
